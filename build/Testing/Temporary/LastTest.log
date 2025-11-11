@@ -1,0 +1,250 @@
+Start testing: Nov 11 10:46 UTC
+----------------------------------------------------------
+1/4 Testing: unique_ptr_test
+1/4 Test: unique_ptr_test
+Command: "/home/runner/work/CppFoundry/CppFoundry/build/test_unique_ptr"
+Directory: /home/runner/work/CppFoundry/CppFoundry/build
+"unique_ptr_test" start time: Nov 11 10:46 UTC
+Output:
+----------------------------------------------------------
+========================================
+    unique_ptr Test Suite
+========================================
+
+=== Test: Basic Construction ===
+TestObject(100) constructed. Count: 1
+TestObject(100) destroyed. Count: 0
+✓ Basic construction test passed
+
+=== Test: Move Semantics ===
+TestObject(200) constructed. Count: 1
+TestObject(200) destroyed. Count: 0
+✓ Move semantics test passed
+
+=== Test: Reset and Release ===
+TestObject(300) constructed. Count: 1
+TestObject(400) constructed. Count: 2
+TestObject(300) destroyed. Count: 1
+TestObject(400) destroyed. Count: 0
+TestObject(500) constructed. Count: 1
+TestObject(500) destroyed. Count: 0
+✓ Reset and release test passed
+
+=== Test: make_unique ===
+TestObject(600) constructed. Count: 1
+TestObject(600) destroyed. Count: 0
+✓ make_unique test passed
+
+=== Test: Custom Deleter ===
+TestObject(700) constructed. Count: 1
+Custom deleter called
+TestObject(700) destroyed. Count: 0
+✓ Custom deleter test passed
+
+=== Test: Array Specialization ===
+✓ Array specialization test passed
+
+=== Test: Comparison Operators ===
+✓ Comparison operators test passed
+
+========================================
+  ✓ All unique_ptr tests passed!
+========================================
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"unique_ptr_test" end time: Nov 11 10:46 UTC
+"unique_ptr_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/4 Testing: shared_ptr_test
+2/4 Test: shared_ptr_test
+Command: "/home/runner/work/CppFoundry/CppFoundry/build/test_shared_ptr"
+Directory: /home/runner/work/CppFoundry/CppFoundry/build
+"shared_ptr_test" start time: Nov 11 10:46 UTC
+Output:
+----------------------------------------------------------
+========================================
+    shared_ptr Test Suite
+========================================
+
+=== Test: Basic Construction ===
+TestObject(100) constructed. Count: 1
+TestObject(100) destroyed. Count: 0
+✓ Basic construction test passed
+
+=== Test: Reference Counting ===
+TestObject(200) constructed. Count: 1
+TestObject(200) destroyed. Count: 0
+✓ Reference counting test passed
+
+=== Test: Move Semantics ===
+TestObject(300) constructed. Count: 1
+TestObject(300) destroyed. Count: 0
+✓ Move semantics test passed
+
+=== Test: Reset ===
+TestObject(400) constructed. Count: 1
+TestObject(500) constructed. Count: 2
+TestObject(400) destroyed. Count: 1
+TestObject(500) destroyed. Count: 0
+✓ Reset test passed
+
+=== Test: make_shared ===
+TestObject(600) constructed. Count: 1
+TestObject(600) destroyed. Count: 0
+✓ make_shared test passed
+
+=== Test: Custom Deleter ===
+TestObject(700) constructed. Count: 1
+Custom deleter called
+TestObject(700) destroyed. Count: 0
+✓ Custom deleter test passed
+
+=== Test: Unique Check ===
+TestObject(800) constructed. Count: 1
+✓ Unique check test passed
+TestObject(800) destroyed. Count: 0
+
+=== Test: Comparison Operators ===
+✓ Comparison operators test passed
+
+=== Test: Swap ===
+TestObject(900) constructed. Count: 1
+TestObject(1000) constructed. Count: 2
+✓ Swap test passed
+TestObject(900) destroyed. Count: 1
+TestObject(1000) destroyed. Count: 0
+
+========================================
+  ✓ All shared_ptr tests passed!
+========================================
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"shared_ptr_test" end time: Nov 11 10:46 UTC
+"shared_ptr_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/4 Testing: vector_test
+3/4 Test: vector_test
+Command: "/home/runner/work/CppFoundry/CppFoundry/build/test_vector"
+Directory: /home/runner/work/CppFoundry/CppFoundry/build
+"vector_test" start time: Nov 11 10:46 UTC
+Output:
+----------------------------------------------------------
+========================================
+      vector Test Suite
+========================================
+
+=== Test: Basic Construction ===
+✓ Basic construction test passed
+
+=== Test: Copy and Move ===
+✓ Copy and move test passed
+
+=== Test: Element Access ===
+✓ Element access test passed
+
+=== Test: Capacity Operations ===
+✓ Capacity operations test passed
+
+=== Test: Push Back and Pop Back ===
+✓ Push back and pop back test passed
+
+=== Test: Emplace Back ===
+✓ Emplace back test passed
+
+=== Test: Resize ===
+✓ Resize test passed
+
+=== Test: Clear ===
+✓ Clear test passed
+
+=== Test: Iterators ===
+✓ Iterators test passed
+
+=== Test: Comparison Operators ===
+✓ Comparison operators test passed
+
+=== Test: Swap ===
+✓ Swap test passed
+
+=== Test: Custom Type ===
+✓ Custom type test passed
+
+========================================
+    ✓ All vector tests passed!
+========================================
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"vector_test" end time: Nov 11 10:46 UTC
+"vector_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: list_test
+4/4 Test: list_test
+Command: "/home/runner/work/CppFoundry/CppFoundry/build/test_list"
+Directory: /home/runner/work/CppFoundry/CppFoundry/build
+"list_test" start time: Nov 11 10:46 UTC
+Output:
+----------------------------------------------------------
+========================================
+       list Test Suite
+========================================
+
+=== Test: Basic Construction ===
+✓ Basic construction test passed
+
+=== Test: Copy and Move ===
+✓ Copy and move test passed
+
+=== Test: Push and Pop ===
+✓ Push and pop test passed
+
+=== Test: Insert ===
+✓ Insert test passed
+
+=== Test: Erase ===
+✓ Erase test passed
+
+=== Test: Emplace ===
+✓ Emplace test passed
+
+=== Test: Clear ===
+✓ Clear test passed
+
+=== Test: Iterators ===
+✓ Iterators test passed
+
+=== Test: Front and Back ===
+✓ Front and back test passed
+
+=== Test: Comparison Operators ===
+✓ Comparison operators test passed
+
+=== Test: Swap ===
+✓ Swap test passed
+
+=== Test: Bidirectional Iteration ===
+✓ Bidirectional iteration test passed
+
+=== Test: Custom Type ===
+✓ Custom type test passed
+
+========================================
+     ✓ All list tests passed!
+========================================
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"list_test" end time: Nov 11 10:46 UTC
+"list_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 11 10:46 UTC
