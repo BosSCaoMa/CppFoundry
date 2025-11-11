@@ -1,9 +1,0 @@
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/test_unique_ptr.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/test_shared_ptr.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/test_vector.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/test_list.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/run_all_tests.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/demo.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/test.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/edit_cache.dir
-/home/runner/work/CppFoundry/CppFoundry/build/CMakeFiles/rebuild_cache.dir

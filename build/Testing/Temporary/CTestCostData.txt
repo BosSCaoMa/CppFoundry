@@ -1,5 +1,0 @@
-unique_ptr_test 1 0.00202772
-shared_ptr_test 1 0.00151334
-vector_test 1 0.0015339
-list_test 1 0.00141036
----
