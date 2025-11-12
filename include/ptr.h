@@ -1,5 +1,7 @@
 #pragma once
 #include <utility> // For std::move and std::forward
+#include <atomic>  // For atomic reference counting
+#include <stdexcept> // For exceptions
 
 // 辅助工厂函数，支持构造函数参数
 template<typename T, typename... Args>
@@ -32,7 +34,10 @@ public:
     }
 
     // 解引用
-    T& operator*() const { return *ptr; }
+    T& operator*() const { 
+        if (!ptr) throw std::runtime_error("Dereferencing null pointer");
+        return *ptr; 
+    }
     T* operator->() const noexcept { return ptr; }
 
     // 获取裸指针
@@ -64,6 +69,12 @@ public:
         return ptr != nullptr;
     }
 
+    // 比较操作符
+    bool operator==(const Uptr& other) const noexcept { return ptr == other.ptr; }
+    bool operator!=(const Uptr& other) const noexcept { return ptr != other.ptr; }
+    bool operator==(std::nullptr_t) const noexcept { return ptr == nullptr; }
+    bool operator!=(std::nullptr_t) const noexcept { return ptr != nullptr; }
+
 private:
     T* ptr;
 
@@ -88,8 +99,8 @@ void swap(Uptr<T>& a, Uptr<T>& b) noexcept {
 template<typename T, typename... Args>
 Sptr<T> make_sptr(Args&&... args);
 struct ControlBlock {
-    int refCount;
-    int weakCount;
+    std::atomic<int> refCount;
+    std::atomic<int> weakCount;
     void* managedPtr; // 保存对象指针，最后一个强引用释放后置为 nullptr
     ControlBlock(void* p) : refCount(1), weakCount(0), managedPtr(p) {}
 };
@@ -99,15 +110,9 @@ public:
     // 构造：只有在 rawPtr 非空时才分配控制块
     explicit Sptr(T* rawPtr = nullptr) : ptr(rawPtr), ctrlBlock(rawPtr ? new ControlBlock(rawPtr) : nullptr) {}
 
-    // 供 Wptr::lock 使用的私有控制块构造（提升为 public+friend 使用）
-    // 从现有控制块生成新的强引用
-    Sptr(ControlBlock* cb) : ptr(cb ? static_cast<T*>(cb->managedPtr) : nullptr), ctrlBlock(cb) {
-        if (ctrlBlock && ctrlBlock->managedPtr) ++(ctrlBlock->refCount);
-    }
-
     // 拷贝构造
     Sptr(const Sptr& other) : ptr(other.ptr), ctrlBlock(other.ctrlBlock) {
-        if (ctrlBlock) ++(ctrlBlock->refCount);
+        if (ctrlBlock) ctrlBlock->refCount.fetch_add(1, std::memory_order_relaxed);
     }
 
     // 拷贝赋值
@@ -116,7 +121,7 @@ public:
             release();
             ptr = other.ptr;
             ctrlBlock = other.ctrlBlock;
-            if (ctrlBlock) ++(ctrlBlock->refCount);
+            if (ctrlBlock) ctrlBlock->refCount.fetch_add(1, std::memory_order_relaxed);
         }
         return *this;
     }
@@ -142,24 +147,33 @@ public:
     ~Sptr() { release(); }
 
     // 访问接口
-    T& operator*() const { return *ptr; }
+    T& operator*() const { 
+        if (!ptr) throw std::runtime_error("Dereferencing null Sptr");
+        return *ptr; 
+    }
     T* operator->() const noexcept { return ptr; }
     T* get() const noexcept { return ptr; }
     explicit operator bool() const noexcept { return ptr != nullptr; }
 
+    // 比较操作符
+    bool operator==(const Sptr& other) const noexcept { return ptr == other.ptr; }
+    bool operator!=(const Sptr& other) const noexcept { return ptr != other.ptr; }
+    bool operator==(std::nullptr_t) const noexcept { return ptr == nullptr; }
+    bool operator!=(std::nullptr_t) const noexcept { return ptr != nullptr; }
+
     // 当前强引用计数
-    int use_count() const { return ctrlBlock ? ctrlBlock->refCount : 0; }
+    int use_count() const { return ctrlBlock ? ctrlBlock->refCount.load(std::memory_order_acquire) : 0; }
 
     // 释放当前拥有的强引用
     void release() {
         if (!ctrlBlock) return;
-        if (--(ctrlBlock->refCount) == 0) {
+        if (ctrlBlock->refCount.fetch_sub(1, std::memory_order_acq_rel) == 1) {
             // 删除对象
             delete static_cast<T*>(ctrlBlock->managedPtr);
             ctrlBlock->managedPtr = nullptr; // 标记对象已释放
             ptr = nullptr;
             // 若弱引用也为 0 则删除控制块
-            if (ctrlBlock->weakCount == 0) {
+            if (ctrlBlock->weakCount.load(std::memory_order_acquire) == 0) {
                 delete ctrlBlock;
                 ctrlBlock = nullptr;
                 return;
@@ -187,6 +201,10 @@ public:
     }
 
 private:
+    // 仅供 Wptr::lock 使用的内部构造，通过控制块提升为新的强引用
+    explicit Sptr(ControlBlock* cb) : ptr(cb ? static_cast<T*>(cb->managedPtr) : nullptr), ctrlBlock(cb) {
+        if (ctrlBlock && ctrlBlock->managedPtr) ctrlBlock->refCount.fetch_add(1, std::memory_order_relaxed);
+    }
     T* ptr{nullptr};
     ControlBlock* ctrlBlock{nullptr};
 
@@ -213,14 +231,18 @@ template<typename T>
 class Wptr {
 public:
     Wptr() noexcept : ctrlBlock(nullptr) {}
-    Wptr(const Sptr<T>& sp) noexcept : ctrlBlock(sp.ctrlBlock) { if (ctrlBlock) ++(ctrlBlock->weakCount); }
+    Wptr(const Sptr<T>& sp) noexcept : ctrlBlock(sp.ctrlBlock) { 
+        if (ctrlBlock) ctrlBlock->weakCount.fetch_add(1, std::memory_order_relaxed); 
+    }
 
-    Wptr(const Wptr& other) : ctrlBlock(other.ctrlBlock) { if (ctrlBlock) ++(ctrlBlock->weakCount); }
+    Wptr(const Wptr& other) : ctrlBlock(other.ctrlBlock) { 
+        if (ctrlBlock) ctrlBlock->weakCount.fetch_add(1, std::memory_order_relaxed); 
+    }
     Wptr& operator=(const Wptr& other) {
         if (this != &other) {
             release();
             ctrlBlock = other.ctrlBlock;
-            if (ctrlBlock) ++(ctrlBlock->weakCount);
+            if (ctrlBlock) ctrlBlock->weakCount.fetch_add(1, std::memory_order_relaxed);
         }
         return *this;
     }
@@ -239,7 +261,8 @@ public:
 
     void release() {
         if (!ctrlBlock) return;
-        if (--(ctrlBlock->weakCount) == 0 && ctrlBlock->refCount == 0) {
+        if (ctrlBlock->weakCount.fetch_sub(1, std::memory_order_acq_rel) == 1 && 
+            ctrlBlock->refCount.load(std::memory_order_acquire) == 0) {
             delete ctrlBlock; // 对象已被强引用释放，弱引用也归零
         }
         ctrlBlock = nullptr;
@@ -249,9 +272,22 @@ public:
 
     bool expired() const noexcept { return !ctrlBlock || ctrlBlock->managedPtr == nullptr; }
 
-    int use_count() const noexcept { return ctrlBlock ? ctrlBlock->refCount : 0; }
+    int use_count() const noexcept { return ctrlBlock ? ctrlBlock->refCount.load(std::memory_order_acquire) : 0; }
 
-    Sptr<T> lock() const noexcept { return expired() ? Sptr<T>() : Sptr<T>(ctrlBlock); }
+    Sptr<T> lock() const noexcept { 
+        if (!ctrlBlock) return Sptr<T>();
+        
+        // 尝试原子性地增加引用计数，只有当计数不为0时才成功
+        int currentCount = ctrlBlock->refCount.load(std::memory_order_acquire);
+        while (currentCount > 0) {
+            if (ctrlBlock->refCount.compare_exchange_weak(currentCount, currentCount + 1, 
+                                                         std::memory_order_acq_rel, 
+                                                         std::memory_order_acquire)) {
+                return Sptr<T>(ctrlBlock);
+            }
+        }
+        return Sptr<T>(); // 对象已被释放
+    }
     /*
     weak_ptr 只是一个“观察者”，它不增加引用计数，也不能直接解引用（不能 -> 或 *）。
     要安全地访问对象，你必须先把它提升为一个 shared_ptr，这样可以确保对象在访问期间不会被其他地方销毁。
