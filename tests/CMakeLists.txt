@@ -24,11 +24,17 @@ add_executable(test_edge_cases test_edge_cases.cpp)
 find_package(Threads REQUIRED)
 target_link_libraries(test_smart_pointers Threads::Threads)
 
+# 查找 GTest
+find_package(GTest CONFIG REQUIRED)
+add_executable(gtest_demo gtest_demo.cpp)
+target_link_libraries(gtest_demo PRIVATE GTest::gtest GTest::gtest_main)
+
 # 设置可执行文件输出目录
 set_target_properties(test_smart_pointers test_quick test_edge_cases
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+set_target_properties(gtest_demo PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 # 添加测试
 enable_testing()
@@ -36,6 +42,7 @@ enable_testing()
 add_test(NAME SmartPointerFullTests COMMAND test_smart_pointers)
 add_test(NAME SmartPointerQuickTests COMMAND test_quick)
 add_test(NAME SmartPointerEdgeCaseTests COMMAND test_edge_cases)
+add_test(NAME GTestDemo COMMAND gtest_demo)
 
 # 打印信息
 message(STATUS "Smart pointer tests configured:")

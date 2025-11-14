@@ -3,9 +3,17 @@
 #include <atomic>  // For atomic reference counting
 #include <stdexcept> // For exceptions
 
-// 辅助工厂函数，支持构造函数参数
+// 前向声明
+template<typename T> class Uptr;
+template<typename T> class Sptr;
+template<typename T> class Wptr;
+
+// 辅助工厂函数声明
 template<typename T, typename... Args>
 Uptr<T> make_uptr(Args&&... args);
+
+template<typename T, typename... Args>
+Sptr<T> make_sptr(Args&&... args);
 
 template<typename T>
 class Uptr {
@@ -96,8 +104,6 @@ void swap(Uptr<T>& a, Uptr<T>& b) noexcept {
 }
 
 // Share_ptr
-template<typename T, typename... Args>
-Sptr<T> make_sptr(Args&&... args);
 struct ControlBlock {
     std::atomic<int> refCount;
     std::atomic<int> weakCount;
@@ -202,8 +208,11 @@ public:
 
 private:
     // 仅供 Wptr::lock 使用的内部构造，通过控制块提升为新的强引用
-    explicit Sptr(ControlBlock* cb) : ptr(cb ? static_cast<T*>(cb->managedPtr) : nullptr), ctrlBlock(cb) {
-        if (ctrlBlock && ctrlBlock->managedPtr) ctrlBlock->refCount.fetch_add(1, std::memory_order_relaxed);
+    explicit Sptr(ControlBlock* cb, bool increment = true) 
+        : ptr(cb ? static_cast<T*>(cb->managedPtr) : nullptr), ctrlBlock(cb) {
+        if (increment && ctrlBlock && ctrlBlock->managedPtr) {
+            ctrlBlock->refCount.fetch_add(1, std::memory_order_relaxed);
+        }
     }
     T* ptr{nullptr};
     ControlBlock* ctrlBlock{nullptr};
@@ -283,7 +292,8 @@ public:
             if (ctrlBlock->refCount.compare_exchange_weak(currentCount, currentCount + 1, 
                                                          std::memory_order_acq_rel, 
                                                          std::memory_order_acquire)) {
-                return Sptr<T>(ctrlBlock);
+                // 创建 Sptr 时不再增加引用计数，因为我们已经在这里增加了
+                return Sptr<T>(ctrlBlock, false); // false 表示不再增加引用计数
             }
         }
         return Sptr<T>(); // 对象已被释放
